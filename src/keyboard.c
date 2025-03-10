@@ -276,70 +276,46 @@ char *help =
 	"  mv <f> <d>      move files (dest can be dir)\n"
 	"  rm <f>          remove files (use -rf for dir)\n\n";
 
+#define VERSION "1.0"
 #define CREDIT "Update by @haoict (c) 2024. Version: " VERSION
 
-void draw_keyboard(SDL_Surface *surface)
-{
-	unsigned short bg_color = SDL_MapRGB(surface->format, 64, 64, 64);
-	unsigned short key_color = SDL_MapRGB(surface->format, 128, 128, 128);
-	unsigned short text_color = SDL_MapRGB(surface->format, 0, 0, 0);
-	unsigned short sel_color = SDL_MapRGB(surface->format, 128, 255, 128);
-	unsigned short sel_toggled_color = SDL_MapRGB(surface->format, 255, 255, 128);
-	unsigned short toggled_color = SDL_MapRGB(surface->format, 192, 192, 0);
-	if (show_help)
-	{
-		SDL_FillRect(surface, NULL, text_color);
-		draw_string(surface, "SDL Terminal by Benob, based on st-sdl", 2, 10, sel_toggled_color);
-		draw_string(surface, help, 8, 30, sel_color);
-		draw_string(surface, CREDIT, 2, 220, sel_toggled_color);
-		return;
-	}
-	if (!active)
-		return;
-	int total_length = -1;
-	for (int i = 0; i < NUM_KEYS && syms[0][0][i]; i++)
-	{
-		total_length += (1 + strlen(syms[0][0][i])) * 6;
-	}
-	int center_x = (surface->w - total_length) / 2;
-	int x = center_x, y = surface->h - 8 * (NUM_ROWS)-16;
-	if (location == 1)
-		y = 16;
+// keyboard.c 调整居中适配720x720
+// keyboard.c 缩小键盘按钮尺寸适配720x720
+void draw_keyboard(SDL_Surface *surface) {
+    unsigned short bg_color = SDL_MapRGB(surface->format, 64, 64, 64);
+    SDL_FillRect(surface, NULL, bg_color);
 
-	SDL_Rect rect = {x - 4, y - 3, total_length + 3, NUM_ROWS * 8 + 3};
-	SDL_FillRect(surface, &rect, bg_color);
+    int key_width = 24;
+    int key_height = 24;
+    int spacing_x = 4;
+    int spacing_y = 4;
 
-	for (int j = 0; j < NUM_ROWS; j++)
-	{
-		x = center_x;
-		for (int i = 0; i < row_length[j]; i++)
-		{
-			int length = strlen(syms[shifted][j][i]);
-			SDL_Rect r2 = {x - 2, y - 1, length * 6 + 4, 7};
-			if (toggled[j][i])
-			{
-				if (selected_i == i && selected_j == j)
-				{
-					SDL_FillRect(surface, &r2, sel_toggled_color);
-				}
-				else
-				{
-					SDL_FillRect(surface, &r2, toggled_color);
-				}
-			}
-			else if (selected_i == i && selected_j == j)
-			{
-				SDL_FillRect(surface, &r2, sel_color);
-			}
-			else
-			{
-				SDL_FillRect(surface, &r2, key_color);
-			}
-			draw_string(surface, syms[shifted][j][i], x, y, text_color);
-			x += 6 * (length + 1);
-		}
-		y += 8;
-	}
+    int keyboard_width = NUM_KEYS * (key_width + spacing_x);
+    int keyboard_height = NUM_ROWS * (key_height + spacing_y);
+
+    int offset_x = (surface->w - keyboard_width) / 2;
+    int offset_y = (surface->h - keyboard_height) / 2;
+
+    for (int j = 0; j < NUM_ROWS; j++) {
+        for (int i = 0; i < row_length[j]; i++) {
+            int x = offset_x + i * (key_width + spacing_x);
+            int y = offset_y + j * (key_height + spacing_y);
+            
+            SDL_Rect key_rect = { x, y, key_width, key_height };
+            unsigned short key_color = toggled[j][i] ? SDL_MapRGB(surface->format, 192,192,0) : SDL_MapRGB(surface->format,128,128,128);
+
+            if(selected_i == i && selected_j == j) {
+                key_color = SDL_MapRGB(surface->format,128,255,128);
+            }
+
+            SDL_FillRect(surface, &key_rect, key_color);
+
+            int text_x = x + (key_width - strlen(syms[shifted][j][i]) * 16) / 2;
+            int text_y = y + (key_height - 16) / 2;
+
+            draw_string(surface, syms[shifted][j][i], text_x, text_y, SDL_MapRGB(surface->format, 0,0,0));
+        }
+    }
 }
 
 enum
@@ -693,12 +669,11 @@ int handle_keyboard_event(SDL_Event *event)
 	return 1;
 }
 
-#ifdef TEST_KEYBOARD
 
 int main()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
-	SDL_Surface *screen = SDL_SetVideoMode(320 * 4, 240 * 4, 16, SDL_SWSURFACE);
+	SDL_Surface *screen = SDL_SetVideoMode(720, 720, 16, SDL_SWSURFACE);
 	SDL_Surface *buffer = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, screen->format->Rmask, screen->format->Gmask, screen->format->Bmask, screen->format->Amask);
 	while (1)
 	{
@@ -733,4 +708,3 @@ int main()
 	SDL_Quit();
 }
 
-#endif
