@@ -105,7 +105,7 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    font = TTF_OpenFont("NotoMono-Regular.ttf", 24);
+    font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24);
     if (!font) {
         fprintf(stderr, "Failed to load font: %s\n", TTF_GetError());
         return EXIT_FAILURE;
