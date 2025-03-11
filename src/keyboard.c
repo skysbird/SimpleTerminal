@@ -233,7 +233,7 @@ static int shifted = 0;
 static int location = 0;
 static int mod_state = 0;
 int active = 1;
-int show_help = 1;
+int show_help = 0;
 
 void init_keyboard()
 {
