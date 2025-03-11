@@ -611,7 +611,7 @@ int handle_keyboard_event(SDL_Event *event)
 		}
 		else if (event->key.keysym.sym == KEY_BACKSPACE)
 		{
-			simulate_key(SDLK_BACKSPACE, STATE_TYPED);
+	//		simulate_key(SDLK_BACKSPACE, STATE_TYPED);
 		}
 		else if (event->key.keysym.sym == KEY_ARROW_UP)
 		{

@@ -36,17 +36,17 @@ void draw_input_box() {
 }
 
 void process_key_event(struct input_event *ev) {
-    if (ev->type == EV_KEY && ev->value == 1) { // Key Pressed
-        if (ev->code == KEY_ENTER) {
-            printf("Entered Address: %s\n", input_text);
-        } else if (ev->code == KEY_BACKSPACE && cursor_position > 0) {
-            input_text[--cursor_position] = '\0';
-        } else if (cursor_position < MAX_INPUT_LENGTH - 1) {
-            input_text[cursor_position++] = (char)ev->code;
-            input_text[cursor_position] = '\0';
-        }
-        draw_input_box();
-    }
+    //if (ev->type == EV_KEY && ev->value == 1) { // Key Pressed
+    //    if (ev->code == KEY_ENTER) {
+    //        printf("Entered Address: %s\n", input_text);
+    //    } else if (ev->code == KEY_BACKSPACE && cursor_position > 0) {
+    //        input_text[--cursor_position] = '\0';
+    //    } else if (cursor_position < MAX_INPUT_LENGTH - 1) {
+    //        input_text[cursor_position++] = (char)ev->code;
+    //        input_text[cursor_position] = '\0';
+    //    }
+    //    draw_input_box();
+    //}
 }
 
 void handle_virtual_keyboard_input(SDLKey key) {
@@ -54,9 +54,11 @@ void handle_virtual_keyboard_input(SDLKey key) {
         input_text[--cursor_position] = '\0';
     } else if (key == SDLK_RETURN) { // 处理回车键
         printf("Entered Address: %s\n", input_text);
-    } else if (cursor_position < MAX_INPUT_LENGTH - 1) {
-        input_text[cursor_position++] = (char)key;
-        input_text[cursor_position] = '\0';
+    } else if (key != SDLK_UP && key != SDLK_DOWN && key != SDLK_LEFT && key != SDLK_RIGHT) {
+    	if (cursor_position < MAX_INPUT_LENGTH - 1) {
+        	input_text[cursor_position++] = (char)key;
+        	input_text[cursor_position] = '\0';
+	}
     }
     draw_input_box();
 }
@@ -90,7 +92,7 @@ int main() {
     draw_input_box(); // 初次绘制 UI 界面
     
     pthread_t tid;
-    pthread_create(&tid, NULL, keyboard_thread, NULL);
+//    pthread_create(&tid, NULL, keyboard_thread, NULL);
     
     while (1) {
         SDL_Event event;
@@ -100,8 +102,10 @@ int main() {
             }
             if (event.type == SDL_KEYDOWN) { // 处理 SDL 虚拟键盘输入
                 handle_keyboard_event(&event);
-                handle_virtual_keyboard_input(event.key.keysym.sym);
+//                printf("xxxx\n");
+               handle_virtual_keyboard_input(event.key.keysym.sym);
             }
+
         }
         
         Uint32 current_time = SDL_GetTicks();
