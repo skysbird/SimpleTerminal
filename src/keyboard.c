@@ -299,14 +299,14 @@ void draw_keyboard(SDL_Surface *surface)
 	int total_length = -1;
 	for (int i = 0; i < NUM_KEYS && syms[0][0][i]; i++)
 	{
-		total_length += (1 + strlen(syms[0][0][i])) * 6;
+		total_length += (1 + strlen(syms[0][0][i])) * 12;
 	}
 	int center_x = (surface->w - total_length) / 2;
-	int x = center_x, y = surface->h - 8 * (NUM_ROWS)-16;
+	int x = center_x, y = surface->h - 16 * (NUM_ROWS)-32;
 	if (location == 1)
-		y = 16;
+		y = 32;
 
-	SDL_Rect rect = {x - 4, y - 3, total_length + 3, NUM_ROWS * 8 + 3};
+	SDL_Rect rect = {x - 4, y - 3, total_length + 3, NUM_ROWS * 16 + 3};
 	SDL_FillRect(surface, &rect, bg_color);
 
 	for (int j = 0; j < NUM_ROWS; j++)
@@ -315,7 +315,7 @@ void draw_keyboard(SDL_Surface *surface)
 		for (int i = 0; i < row_length[j]; i++)
 		{
 			int length = strlen(syms[shifted][j][i]);
-			SDL_Rect r2 = {x - 2, y - 1, length * 6 + 4, 7};
+			SDL_Rect r2 = {x - 2, y - 1, length * 12 + 4, 14};
 			if (toggled[j][i])
 			{
 				if (selected_i == i && selected_j == j)
@@ -336,9 +336,9 @@ void draw_keyboard(SDL_Surface *surface)
 				SDL_FillRect(surface, &r2, key_color);
 			}
 			draw_string(surface, syms[shifted][j][i], x, y, text_color);
-			x += 6 * (length + 1);
+			x += 12 * (length + 1);
 		}
-		y += 8;
+		y += 16;
 	}
 }
 
@@ -698,8 +698,8 @@ int handle_keyboard_event(SDL_Event *event)
 int main()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
-	SDL_Surface *screen = SDL_SetVideoMode(320 * 4, 240 * 4, 16, SDL_SWSURFACE);
-	SDL_Surface *buffer = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, screen->format->Rmask, screen->format->Gmask, screen->format->Bmask, screen->format->Amask);
+	SDL_Surface *screen = SDL_SetVideoMode(720 * 4, 720 * 4, 16, SDL_SWSURFACE);
+	SDL_Surface *buffer = SDL_CreateRGBSurface(SDL_SWSURFACE, 720, 720, 16, screen->format->Rmask, screen->format->Gmask, screen->format->Bmask, screen->format->Amask);
 	while (1)
 	{
 		SDL_Event event;

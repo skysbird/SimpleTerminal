@@ -21,15 +21,49 @@ void draw_char(SDL_Surface* surface, unsigned char symbol, int x, int y, unsigne
 }
 
 void draw_string(SDL_Surface* surface, const char* text, int orig_x, int orig_y, unsigned short color) {
-	int x = orig_x, y = orig_y;
-	while(*text) {
-		if(*text == '\n') {
-			x = orig_x;
-			y += 8;
-		} else {
-			draw_char(surface, *text, x, y, color);
-			x += 6;
-		}
-		text++;
-	}
+	draw_string_scaled(surface, text, orig_x, orig_y, color, 2);
 }
+
+
+
+void draw_char_scaled(SDL_Surface* surface, unsigned char symbol, int x, int y, unsigned short color, int scale) {
+    int flip = 0;
+    if(symbol > 127) {
+        flip = 1;
+        symbol -= 128;
+    }
+
+    const unsigned char* ptr = embedded_font + symbol * 8;
+
+    for(int i = 0, ys = 0; i < 6; i++, ptr++, ys += 1) {
+        for(int col = 8 - 6, xs = 0; col < 8; col++, xs += 1) {
+            if(*ptr & (1 << col)) {
+                // 绘制一个 scale x scale 的矩形
+                for(int dx = 0; dx < scale; dx++) {
+                    for(int dy = 0; dy < scale; dy++) {
+                        int pixel_x = x + (5 - xs) * scale + dx;
+                        int pixel_y = y + (flip ? (5 - ys) : ys) * scale + dy;
+
+                        if(pixel_x >= 0 && pixel_x < surface->w && pixel_y >= 0 && pixel_y < surface->h)
+                            ((unsigned short*)surface->pixels)[pixel_y * (surface->pitch >> 1) + pixel_x] = color;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void draw_string_scaled(SDL_Surface* surface, const char* text, int orig_x, int orig_y, unsigned short color, int scale) {
+    int x = orig_x, y = orig_y;
+    while(*text) {
+        if(*text == '\n') {
+            x = orig_x;
+            y += 8 * scale;
+        } else {
+            draw_char_scaled(surface, *text, x, y, color, scale);
+            x += 6 * scale;
+        }
+        text++;
+    }
+}
+

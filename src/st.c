@@ -2418,6 +2418,8 @@ sdlinit(void) {
 #elif TRIMUISMART
 	setenv("SDL_USE_PAN", "true", 1);						// allow DOUBLEBUF
 	if(!(screen = SDL_SetVideoMode(240, 320, 16, SDL_HWSURFACE | SDL_DOUBLEBUF))) {	// rotated LCD
+#elif CUBEXX
+        if(!(screen = SDL_SetVideoMode(720, 720, 16, SDL_HWSURFACE | SDL_DOUBLEBUF))) {
 #else
 	if(!(screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_DOUBLEBUF))) {
 #endif
@@ -2816,6 +2818,8 @@ cresize(int width, int height)
 	if(!(screen = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE))) {
 #elif TRIMUISMART
 	if(!(screen = SDL_SetVideoMode(240, 320, 16, SDL_HWSURFACE | SDL_DOUBLEBUF))) {
+#elif CUBEXX
+        if(!(screen = SDL_SetVideoMode(720, 720, 16, SDL_HWSURFACE | SDL_DOUBLEBUF))) {
 #else
 	if(!(screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_DOUBLEBUF))) {
 #endif
@@ -3022,7 +3026,7 @@ main(int argc, char *argv[]) {
 run:
     setlocale(LC_CTYPE, "");
     tnew((initial_width - 2) / 6, (initial_height - 2) / 8);
-    ttynew();
+    //ttynew();
     sdlinit(); /* Must have TTY before cresize */
     init_keyboard();
     selinit();
