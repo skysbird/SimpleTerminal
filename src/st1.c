@@ -12,7 +12,8 @@
 
 char input_text[MAX_INPUT_LENGTH] = "";
 int cursor_position = 0;
-//int show_help = 0;
+int show_cursor = 1;
+Uint32 last_cursor_toggle = 0;
 
 SDL_Surface *screen;
 
@@ -21,7 +22,14 @@ void draw_input_box() {
     SDL_FillRect(screen, &input_box, SDL_MapRGB(screen->format, 255, 255, 255));
     
     SDL_Color text_color = {0, 0, 0};
-    draw_string(screen, input_text, 155, 315, SDL_MapRGB(screen->format, text_color.r, text_color.g, text_color.b));
+    char display_text[MAX_INPUT_LENGTH + 2];
+    strcpy(display_text, input_text);
+    
+    if (show_cursor) {
+        strcat(display_text, "|"); // 显示光标
+    }
+    
+    draw_string(screen, display_text, 155, 315, SDL_MapRGB(screen->format, text_color.r, text_color.g, text_color.b));
     
     draw_keyboard(screen); // 重新确保绘制虚拟键盘
     SDL_Flip(screen);
@@ -92,12 +100,18 @@ int main() {
             }
             if (event.type == SDL_KEYDOWN) { // 处理 SDL 虚拟键盘输入
                 handle_keyboard_event(&event);
-		    handle_virtual_keyboard_input(event.key.keysym.sym);
-
+                handle_virtual_keyboard_input(event.key.keysym.sym);
             }
         }
-        draw_input_box();
+        
+        Uint32 current_time = SDL_GetTicks();
+        if (current_time > last_cursor_toggle + 500) { // 每 500ms 切换光标状态
+            show_cursor = !show_cursor;
+            last_cursor_toggle = current_time;
+            draw_input_box();
+        }
     }
     SDL_Quit();
     return 0;
 }
+
