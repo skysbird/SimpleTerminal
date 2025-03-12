@@ -63,20 +63,52 @@ void handle_virtual_keyboard_input(SDLKey key) {
 
 
 void process_key_event(struct input_event *ev) {
-	    printf("Event Type: %d\n", ev->type);          // ????
+    printf("Event Type: %d\n", ev->type);          // ????
     printf("Event Code: %d\n", ev->code);          // ??
-    printf("Event Value: %d\n", ev->value);        // ??????????
-    //if (ev->type == EV_KEY && ev->value == 1) { // Key Pressed
-    //    if (ev->code == KEY_ENTER) {
-    //        printf("Entered Address: %s\n", input_text);
-    //    } else if (ev->code == KEY_BACKSPACE && cursor_position > 0) {
-    //        input_text[--cursor_position] = '\0';
-    //    } else if (cursor_position < MAX_INPUT_LENGTH - 1) {
-    //        input_text[cursor_position++] = (char)ev->code;
-    //        input_text[cursor_position] = '\0';
-    //    }
-    //    draw_input_box();
-    //}
+    printf("Event Value: %d\n", ev->value);        
+    SDL_Event sdl_event;
+
+    sdl_event.type = SDL_KEYDOWN;
+    sdl_event.key.keysym.sym = SDLK_1;
+    SDL_PushEvent(&sdl_event);
+
+    if (ev->type == EV_KEY && ev->value == 1) { // Key Pressed
+        if (ev->code == BTN_SOUTH) {
+            // A 按键按下，转换为 SDL 事件
+            sdl_event.type = SDL_KEYDOWN;
+            sdl_event.key.keysym.sym = SDLK_a;
+            SDL_PushEvent(&sdl_event);
+        }
+    }
+
+    if (ev->type == EV_ABS) {
+        if (ev->code == ABS_HAT0Y) {
+            // D-Pad 上下方向
+            sdl_event.type = SDL_KEYDOWN;
+            if (ev->value == -1) { // 上
+                sdl_event.key.keysym.sym = SDLK_UP;
+            } else if (ev->value == 1) { // 下
+                sdl_event.key.keysym.sym = SDLK_DOWN;
+            } else { // 松开
+                sdl_event.type = SDL_KEYUP;
+                sdl_event.key.keysym.sym = SDLK_UP; // 重置方向键
+            }
+            SDL_PushEvent(&sdl_event);
+        } else if (ev->code == ABS_HAT0X) {
+            // D-Pad 左右方向
+            sdl_event.type = SDL_KEYDOWN;
+            if (ev->value == -1) { // 左
+                sdl_event.key.keysym.sym = SDLK_LEFT;
+            } else if (ev->value == 1) { // 右
+                sdl_event.key.keysym.sym = SDLK_RIGHT;
+            } else { // 松开
+                sdl_event.type = SDL_KEYUP;
+                sdl_event.key.keysym.sym = SDLK_LEFT; // 重置方向键
+            }
+            SDL_PushEvent(&sdl_event);
+        }
+    }
+
 }
 
 void *keyboard_thread(void *arg) {
