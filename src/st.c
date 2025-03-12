@@ -8,7 +8,7 @@
 #include <SDL/SDL_ttf.h>
 #include "keyboard.h"
 
-#define EVENT_DEVICE "/dev/input/event1"
+#define EVENT_DEVICE "/dev/input/event11"
 #define MAX_INPUT_LENGTH 256
 
 char input_text[MAX_INPUT_LENGTH] = "";
@@ -68,15 +68,15 @@ void process_key_event(struct input_event *ev) {
     printf("Event Value: %d\n", ev->value);        
     SDL_Event sdl_event;
 
-    sdl_event.type = SDL_KEYDOWN;
-    sdl_event.key.keysym.sym = SDLK_1;
-    SDL_PushEvent(&sdl_event);
+    //sdl_event.type = SDL_KEYDOWN;
+    //sdl_event.key.keysym.sym = SDLK_1;
+    //SDL_PushEvent(&sdl_event);
 
     if (ev->type == EV_KEY && ev->value == 1) { // Key Pressed
         if (ev->code == BTN_SOUTH) {
             // A 按键按下，转换为 SDL 事件
             sdl_event.type = SDL_KEYDOWN;
-            sdl_event.key.keysym.sym = SDLK_a;
+            sdl_event.key.keysym.sym = SDLK_RETURN;
             SDL_PushEvent(&sdl_event);
         }
     }
@@ -85,6 +85,7 @@ void process_key_event(struct input_event *ev) {
         if (ev->code == ABS_HAT0Y) {
             // D-Pad 上下方向
             sdl_event.type = SDL_KEYDOWN;
+	    sdl_event.key.state = SDL_PRESSED;
             if (ev->value == -1) { // 上
                 sdl_event.key.keysym.sym = SDLK_UP;
             } else if (ev->value == 1) { // 下
