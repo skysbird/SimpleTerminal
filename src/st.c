@@ -19,6 +19,33 @@ Uint32 last_cursor_toggle = 0;
 SDL_Surface *screen;
 TTF_Font *font = NULL;
 
+
+
+void start_moonlight_streaming() {
+    if (cursor_position == 0) return; // 如果输入为空，则不启动
+
+    printf("Starting Moonlight stream for: %s\n", input_text);
+
+    pid_t pid = fork();
+    if (pid == 0) { // 子进程
+        printf("Fork successful. Launching Moonlight...\n");
+
+        // 构造 moonlight 命令
+	char *args[] = { "/usr/local/bin/moonlight", "stream", "-width", "720", "-height","720", "-app", "Steam", input_text, NULL };
+
+	// 执行 Moonlight
+	execvp(args[0], args);
+
+        // 如果 execvp 失败，打印错误并退出子进程
+        perror("Failed to start Moonlight");
+        exit(EXIT_FAILURE);
+    } else if (pid > 0) {
+        printf("Moonlight started in background (PID: %d)\n", pid);
+    } else {
+        perror("Fork failed");
+    }
+}
+
 void draw_text(const char *text, int x, int y, SDL_Color color) {
     if (!font) return;
 
@@ -51,7 +78,7 @@ void handle_virtual_keyboard_input(SDLKey key) {
     if (key == SDLK_BACKSPACE && cursor_position > 0) {
         input_text[--cursor_position] = '\0';
     } else if (key == SDLK_RETURN) {
-        printf("Entered Address: %s\n", input_text);
+        start_moonlight_streaming(); // 启动 Moonlight
     } else if (key != SDLK_UP && key != SDLK_DOWN && key != SDLK_LEFT && key != SDLK_RIGHT) {
         if (cursor_position < MAX_INPUT_LENGTH - 1) {
             input_text[cursor_position++] = (char)key;
