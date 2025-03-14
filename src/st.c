@@ -13,6 +13,9 @@
 
 char input_text[MAX_INPUT_LENGTH] = "skysbird.synology.me";
 int cursor_position = strlen("skysbird.synology.me")+1;
+// char input_text[MAX_INPUT_LENGTH] = "";
+// int cursor_position = 0;
+
 int show_cursor = 1;
 Uint32 last_cursor_toggle = 0;
 
