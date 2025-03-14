@@ -179,7 +179,7 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    SDL_WM_SetCaption("Moonlight_Window", NULL);
+//    SDL_WM_SetCaption("Moonlight_Window", NULL);
 
 
     if (TTF_Init() < 0) {
@@ -218,7 +218,7 @@ int main() {
                     running = 0;
                 }
                 handle_virtual_keyboard_input(event.key.keysym.sym);
-		        handle_keyboard_event(&event);
+	        handle_keyboard_event(&event);
             }
         }
         Uint32 current_time = SDL_GetTicks();
