@@ -8,11 +8,11 @@
 #include <SDL/SDL_ttf.h>
 #include "keyboard.h"
 
-#define EVENT_DEVICE "/dev/input/event11"
+#define EVENT_DEVICE "/dev/input/event1"
 #define MAX_INPUT_LENGTH 256
 
-char input_text[MAX_INPUT_LENGTH] = "";
-int cursor_position = 0;
+char input_text[MAX_INPUT_LENGTH] = "skysbird.synology.me";
+int cursor_position = strlen("skysbird.synology.me")+1;
 int show_cursor = 1;
 Uint32 last_cursor_toggle = 0;
 
@@ -33,7 +33,7 @@ void start_moonlight_streaming() {
     pid_t pid = fork();
 if (pid == 0) { // 子进程
     setsid();
-    execl("/usr/local/bin/moonlight", "moonlight", "stream", "-width", "720", "-height", "720", "-platform", "sdl", "-app", "Steam", "-windowed", input_text, NULL);
+    execl("/usr/bin/moonlight", "moonlight", "stream", "-width", "720", "-height", "720", "-platform", "sdl", "-app", "Steam", "-windowed", input_text, NULL);
 
     perror("execl failed");
     exit(EXIT_FAILURE);
@@ -83,9 +83,9 @@ void draw_input_box() {
 void handle_virtual_keyboard_input(SDLKey key) {
     if (key == SDLK_BACKSPACE && cursor_position > 0) {
         input_text[--cursor_position] = '\0';
-    } else if (key == SDLK_RETURN) {
+    } else if (key == 311) {
         start_moonlight_streaming(); // 启动 Moonlight
-    } else if (key != SDLK_UP && key != SDLK_DOWN && key != SDLK_LEFT && key != SDLK_RIGHT) {
+    } else if (key!= SDLK_RETURN  && key != SDLK_UP && key != SDLK_DOWN && key != SDLK_LEFT && key != SDLK_RIGHT) {
         if (cursor_position < MAX_INPUT_LENGTH - 1) {
             input_text[cursor_position++] = (char)key;
             input_text[cursor_position] = '\0';
@@ -94,6 +94,7 @@ void handle_virtual_keyboard_input(SDLKey key) {
     draw_input_box();
 }
 
+#define BTN_SOUTH 304
 
 void process_key_event(struct input_event *ev) {
     printf("Event Type: %d\n", ev->type);          // ????
@@ -110,8 +111,16 @@ void process_key_event(struct input_event *ev) {
             // A 按键按下，转换为 SDL 事件
             sdl_event.type = SDL_KEYDOWN;
             sdl_event.key.keysym.sym = SDLK_RETURN;
+            sdl_event.key.state = SDL_PRESSED;
             SDL_PushEvent(&sdl_event);
         }
+        if (ev->code == 311 || ev->code == 312) {
+            sdl_event.type = SDL_KEYDOWN;
+            sdl_event.key.keysym.sym = ev->code;
+            sdl_event.key.state = SDL_PRESSED;
+            SDL_PushEvent(&sdl_event);
+        }
+        
     }
 
     if (ev->type == EV_ABS) {
@@ -131,6 +140,8 @@ void process_key_event(struct input_event *ev) {
         } else if (ev->code == ABS_HAT0X) {
             // D-Pad 左右方向
             sdl_event.type = SDL_KEYDOWN;
+            sdl_event.key.state = SDL_PRESSED;
+
             if (ev->value == -1) { // 左
                 sdl_event.key.keysym.sym = SDLK_LEFT;
             } else if (ev->value == 1) { // 右
@@ -159,6 +170,8 @@ void *keyboard_thread(void *arg) {
     close(fd);
     return NULL;
 }
+
+int running = 1;
 
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -191,15 +204,21 @@ int main() {
     pthread_t tid;
     pthread_create(&tid, NULL, keyboard_thread, NULL);
 
-    while (1) {
+    while (running) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
+            if (event.key.keysym.sym == 0) {
+                continue;
+            }            
             if (event.type == SDL_QUIT) {
-                exit(0);
+                running = 0;
             }
             if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.sym == 312) {
+                    running = 0;
+                }
                 handle_virtual_keyboard_input(event.key.keysym.sym);
-		handle_keyboard_event(&event);
+		        handle_keyboard_event(&event);
             }
         }
         Uint32 current_time = SDL_GetTicks();
