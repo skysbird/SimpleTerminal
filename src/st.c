@@ -20,6 +20,10 @@ SDL_Surface *screen;
 TTF_Font *font = NULL;
 
 
+void reset_sdl_input() {
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
+    SDL_InitSubSystem(SDL_INIT_VIDEO);
+}
 
 void start_moonlight_streaming() {
     if (cursor_position == 0) return; // 如果输入为空，则不启动
@@ -27,23 +31,25 @@ void start_moonlight_streaming() {
     printf("Starting Moonlight stream for: %s\n", input_text);
 
     pid_t pid = fork();
-    if (pid == 0) { // 子进程
-        printf("Fork successful. Launching Moonlight...\n");
+if (pid == 0) { // 子进程
+    setsid();
+    execl("/usr/local/bin/moonlight", "moonlight", "stream", "-width", "720", "-height", "720", "-platform", "sdl", "-app", "Steam", "-windowed", input_text, NULL);
 
-        // 构造 moonlight 命令
-	char *args[] = { "/usr/local/bin/moonlight", "stream", "-width", "720", "-height","720", "-app", "Steam", input_text, NULL };
+    perror("execl failed");
+    exit(EXIT_FAILURE);
+} else if (pid > 0) { // 父进程
+    printf("Moonlight started with PID: %d\n", pid);
+    int status;
+    waitpid(pid, &status, 0); // 等待 Moonlight 退出
+    printf("Moonlight exited, now returning to SDL window.\n");
 
-	// 执行 Moonlight
-	execvp(args[0], args);
+//    reset_sdl_input();
 
-        // 如果 execvp 失败，打印错误并退出子进程
-        perror("Failed to start Moonlight");
-        exit(EXIT_FAILURE);
-    } else if (pid > 0) {
-        printf("Moonlight started in background (PID: %d)\n", pid);
-    } else {
-        perror("Fork failed");
-    }
+} else {
+    perror("fork failed");
+}
+
+
 }
 
 void draw_text(const char *text, int x, int y, SDL_Color color) {
@@ -159,6 +165,9 @@ int main() {
         fprintf(stderr, "Unable to initialize SDL: %s\n", SDL_GetError());
         return EXIT_FAILURE;
     }
+
+    SDL_WM_SetCaption("Moonlight_Window", NULL);
+
 
     if (TTF_Init() < 0) {
         fprintf(stderr, "Unable to initialize SDL_ttf: %s\n", TTF_GetError());
