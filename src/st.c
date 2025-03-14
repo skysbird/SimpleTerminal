@@ -28,6 +28,19 @@ void reset_sdl_input() {
     SDL_InitSubSystem(SDL_INIT_VIDEO);
 }
 
+void adjust_volume(int volume_change) {
+    char command[128];
+    if (volume_change > 0) {
+        snprintf(command, sizeof(command), "amixer set 'lineout volume' %d+", volume_change);
+    } else {
+        snprintf(command, sizeof(command), "amixer set 'lineout volume' %d-", -volume_change);
+    }    
+    system(command);
+    printf("Volume changed.\n");
+    printf(command);
+    printf("\n");
+}
+
 void start_moonlight_streaming() {
     if (cursor_position == 0) return; // 如果输入为空，则不启动
 
@@ -145,6 +158,16 @@ void process_key_event(struct input_event *ev) {
             sdl_event.key.keysym.sym = ev->code;
             sdl_event.key.state = SDL_PRESSED;
             SDL_PushEvent(&sdl_event);
+        }
+        
+        if (ev->code == 114) {
+            //down
+            adjust_volume(-5);
+        }
+
+        if (ev->code == 115) {
+            //up
+            adjust_volume(5);
         }
         
     }
