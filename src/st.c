@@ -32,14 +32,29 @@ void start_moonlight_streaming() {
     if (cursor_position == 0) return; // 如果输入为空，则不启动
 
     printf("Starting Moonlight stream for: %s\n", input_text);
+    // SDL_WM_GrabInput(SDL_GRAB_OFF);
+    // SDL_ShowCursor(SDL_ENABLE);
+    // SDL_QuitSubSystem(SDL_INIT_VIDEO);  // 释放 SDL 持有的键盘/鼠标输入
+
 
     pid_t pid = fork();
 if (pid == 0) { // 子进程
     setsid();
-    execl("/usr/bin/moonlight", "moonlight", "stream", "-width", "720", "-height", "720", "-platform", "sdl", "-app", "Steam", "-windowed", input_text, NULL);
+    execl("/usr/bin/moonlight", "moonlight", "stream", "-width", "720", "-height", "720", "-platform", "sdl", "-mapping", "/mnt/vendor/deep/ppsspp/assets/gamecontrollerdb.txt","-app", "Steam", "-windowed", input_text, NULL);
 
     perror("execl failed");
     exit(EXIT_FAILURE);
+    // 构建命令字符串
+    // char command[1024];
+    // snprintf(command, sizeof(command),
+    //          "nohup /usr/bin/moonlight stream -width 720 -height 720 -platform sdl -mapping /mnt/vendor/deep/ppsspp/assets/gamecontrollerdb.txt -app Steam -windowed \"%s\" &",
+    //          input_text);
+
+    // // 执行 system 命令
+    // system(command);
+
+    // printf("Moonlight started.\n");
+
 } else if (pid > 0) { // 父进程
     printf("Moonlight started with PID: %d\n", pid);
     int status;
@@ -47,6 +62,14 @@ if (pid == 0) { // 子进程
     printf("Moonlight exited, now returning to SDL window.\n");
 
 //    reset_sdl_input();
+// 重新获取 SDL 输入焦点
+        // SDL_WM_GrabInput(SDL_GRAB_ON);
+        // SDL_ShowCursor(SDL_DISABLE);
+        // SDL_InitSubSystem(SDL_INIT_VIDEO);
+
+        // 重新初始化 SDL 窗口（可选）
+        SDL_Quit();
+        SDL_Init(SDL_INIT_VIDEO);
 
 } else {
     perror("fork failed");
