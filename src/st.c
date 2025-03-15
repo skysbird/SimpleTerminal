@@ -53,7 +53,7 @@ void start_moonlight_streaming() {
     pid_t pid = fork();
 if (pid == 0) { // 子进程
     setsid();
-    execl("/usr/bin/moonlight", "moonlight", "stream", "-width", "720", "-height", "720", "-platform", "sdl", "-mapping", "/mnt/vendor/deep/ppsspp/assets/gamecontrollerdb.txt","-app", "Steam", "-windowed", input_text, NULL);
+    execl("/usr/bin/moonlight", "moonlight", "stream", "-width", "720", "-height", "720", "-platform", "sdl", "-mapping", "/mnt/vendor/deep/ppsspp/assets/gamecontrollerdb.txt","-app", "Steam", "-windowed","-quitappafter", input_text, NULL);
 
     perror("execl failed");
     exit(EXIT_FAILURE);
