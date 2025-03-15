@@ -162,12 +162,12 @@ void process_key_event(struct input_event *ev) {
         
         if (ev->code == 114) {
             //down
-            adjust_volume(-5);
+            adjust_volume(-1);
         }
 
         if (ev->code == 115) {
             //up
-            adjust_volume(5);
+            adjust_volume(1);
         }
         
     }
