@@ -4,7 +4,7 @@
 #include <string.h>
 
 char history[HISTORY_SIZE][MAX_INPUT_LENGTH] = {"192.168.3.131","skysbird.synology.me"};  // 存储历史记录
-int history_count = 0;
+int history_count = 2;
 int selected_index = 0;  // 记录当前选择的索引
 
 // 添加历史记录（FIFO 滚动方式）
@@ -69,6 +69,11 @@ const char *show_history_menu(SDL_Surface *screen) {
         }
         SDL_Delay(100);
     }
+
+    // ✅ **清除菜单界面**
+    SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0, 0, 0));  // 黑色清屏
+    SDL_Flip(screen);
+
     return history[selected_index];
 }
 

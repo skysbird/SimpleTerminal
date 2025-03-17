@@ -211,6 +211,7 @@ void draw_input_box() {
 
 int menu_pressed = 0;
 int sel_pressed = 0;
+int start_pressed = 0;
 
 void handle_virtual_keyboard_input(SDLKey key) {
     if (key == SDLK_BACKSPACE && cursor_position > 0) {
@@ -218,6 +219,7 @@ void handle_virtual_keyboard_input(SDLKey key) {
     } else if (key == 311) {
         start_moonlight_streaming(); // 启动 Moonlight
     } else if (key == 312){
+	printf("show menu....\n");
         const char *selected_entry = show_history_menu(screen);
         if (selected_entry) {
             strncpy(input_text, selected_entry, MAX_INPUT_LENGTH - 1);  // 赋值选中的记录
@@ -253,12 +255,6 @@ void process_key_event(struct input_event *ev) {
             sdl_event.key.state = SDL_PRESSED;
             SDL_PushEvent(&sdl_event);
         }
-        if (ev->code == 311 || ev->code == 312 || ev->code == 310) {
-            sdl_event.type = SDL_KEYDOWN;
-            sdl_event.key.keysym.sym = ev->code;
-            sdl_event.key.state = SDL_PRESSED;
-            SDL_PushEvent(&sdl_event);
-        }
 
 	if (ev->code == 310) {
 		sel_pressed = 1;
@@ -268,10 +264,27 @@ void process_key_event(struct input_event *ev) {
 		menu_pressed = 1;
 	}
 
+	if (ev->code == 311){
+		start_pressed = 1;
+	}
+
         if (menu_pressed && sel_pressed) {
             printf("Menu + Start pressed, exiting application.\n");
             running = 0;
+	    return;
         }
+
+	if (sel_pressed && start_pressed) {
+		return;
+	}
+
+        if (ev->code == 311 || ev->code == 312 || ev->code == 310) {
+            sdl_event.type = SDL_KEYDOWN;
+            sdl_event.key.keysym.sym = ev->code;
+            sdl_event.key.state = SDL_PRESSED;
+            SDL_PushEvent(&sdl_event);
+        }
+
 
         
         if (ev->code == 114) {
@@ -289,6 +302,7 @@ void process_key_event(struct input_event *ev) {
     if (ev->type == EV_KEY && ev->value == 0) {
 	    menu_pressed = 0;
 	    sel_pressed = 0;
+	    start_pressed = 0;
     }
 
 
