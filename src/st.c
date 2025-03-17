@@ -62,6 +62,36 @@ void draw_moonlight_output(const char *text) {
     SDL_Flip(screen);
 }
 
+int history_count = 10;
+char history[256][10] = {"1","2","3","4","5","6","7","8","9","10"};
+
+void show_history_menu() {
+    FILE *dmenu = popen("/usr/bin/dmenu -l 10", "w");
+    if (!dmenu) {
+        perror("Failed to open dmenu");
+        return;
+    }
+
+    // 逐行写入历史记录
+    for (int i = 0; i < history_count; i++) {
+        fprintf(dmenu, "%s\n", history[i]);
+    }
+    pclose(dmenu);
+
+    // 读取 dmenu 选择的结果
+    FILE *result = popen("/usr/bin/dmenu -l 10", "r");
+    if (!result) {
+        perror("Failed to read dmenu result");
+        return;
+    }
+
+    char selected[MAX_INPUT_LENGTH];
+    if (fgets(selected, sizeof(selected), result)) {
+        selected[strcspn(selected, "\n")] = '\0'; // 移除换行符
+        strncpy(input_text, selected, MAX_INPUT_LENGTH - 1);
+    }
+    pclose(result);
+}
 
 
 
@@ -218,7 +248,8 @@ void handle_virtual_keyboard_input(SDLKey key) {
     if (key == SDLK_BACKSPACE && cursor_position > 0) {
         input_text[--cursor_position] = '\0';
     } else if (key == 311) {
-        start_moonlight_streaming(); // 启动 Moonlight
+//        start_moonlight_streaming(); // 启动 Moonlight
+	show_history_menu();
     } else if (key!= SDLK_RETURN  && key != SDLK_UP && key != SDLK_DOWN && key != SDLK_LEFT && key != SDLK_RIGHT) {
         if (cursor_position < MAX_INPUT_LENGTH - 1) {
             input_text[cursor_position++] = (char)key;
