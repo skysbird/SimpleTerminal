@@ -123,8 +123,12 @@ void start_moonlight_streaming() {
         waitpid(pid, NULL, 0); // 等待 Moonlight 退出
         printf("Moonlight exited, now returning to SDL window.\n");
 
-        //SDL_Quit();
-        //SDL_Init(SDL_INIT_VIDEO);
+        SDL_Quit();
+        if (!SDL_WasInit(SDL_INIT_VIDEO)) {
+            SDL_Init(SDL_INIT_VIDEO);
+            screen = SDL_SetVideoMode(720, 720, 16, SDL_SWSURFACE);
+        }
+
     } else {
         perror("fork failed");
     }
@@ -275,6 +279,8 @@ void process_key_event(struct input_event *ev) {
         }
 
 	if (sel_pressed && start_pressed) {
+
+                system("pkill moonlight");
 		return;
 	}
 
@@ -356,6 +362,8 @@ void *keyboard_thread(void *arg) {
 
 
 int main() {
+    setenv("SDL_NOMOUSE", "1", 1);
+
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         fprintf(stderr, "Unable to initialize SDL: %s\n", SDL_GetError());
         return EXIT_FAILURE;
@@ -392,9 +400,9 @@ int main() {
             if (event.key.keysym.sym == 0) {
                 continue;
             }            
-            if (event.type == SDL_QUIT) {
-                running = 0;
-            }
+//            if (event.type == SDL_QUIT) {
+//                running = 0;
+//            }
             if (event.type == SDL_KEYDOWN) {
                 handle_virtual_keyboard_input(event.key.keysym.sym);
 	        handle_keyboard_event(&event);
