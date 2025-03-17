@@ -23,6 +23,48 @@ SDL_Surface *screen;
 TTF_Font *font = NULL;
 
 
+#include <ctype.h>
+
+
+#define MAX_LOG_LINES 10
+#define LOG_LINE_WIDTH 50  // 每行最多字符
+char log_lines[MAX_LOG_LINES][LOG_LINE_WIDTH + 1];
+int log_line_count = 0;
+
+void draw_moonlight_output(const char *text) {
+    // 清除日志区域，确保没有残留
+    SDL_Rect output_box = {50, 250, 720, 200};
+    SDL_FillRect(screen, &output_box, SDL_MapRGB(screen->format, 0, 0, 0));
+
+    // 处理文本换行
+    char *line = strtok(text, "\n");
+    while (line != NULL) {
+        if (log_line_count < MAX_LOG_LINES) {
+            strncpy(log_lines[log_line_count], line, LOG_LINE_WIDTH);
+            log_lines[log_line_count][LOG_LINE_WIDTH] = '\0';
+            log_line_count++;
+        } else {
+            for (int i = 1; i < MAX_LOG_LINES; i++) {
+                strncpy(log_lines[i - 1], log_lines[i], LOG_LINE_WIDTH);
+            }
+            strncpy(log_lines[MAX_LOG_LINES - 1], line, LOG_LINE_WIDTH);
+        }
+        line = strtok(NULL, "\n");
+    }
+
+    // 重新绘制日志
+    SDL_Color text_color = {255, 255, 255};
+    for (int i = 0; i < log_line_count-1; i++) {
+        draw_text(log_lines[i], 55, 260 + (i * 20), text_color);
+    }
+
+    SDL_Flip(screen);
+}
+
+
+
+
+
 void reset_sdl_input() {
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
     SDL_InitSubSystem(SDL_INIT_VIDEO);
@@ -41,7 +83,55 @@ void adjust_volume(int volume_change) {
     printf("\n");
 }
 
+
 void start_moonlight_streaming() {
+    if (cursor_position == 0) return; // 如果输入为空，则不启动
+
+    printf("Starting Moonlight stream for: %s\n", input_text);
+
+    int pipe_fd[2];
+    if (pipe(pipe_fd) == -1) {
+        perror("pipe failed");
+        return;
+    }
+
+    pid_t pid = fork();
+    if (pid == 0) { // 子进程
+        close(pipe_fd[0]); // 关闭子进程的 pipe 读端
+        dup2(pipe_fd[1], STDOUT_FILENO); // 重定向 stdout
+        dup2(pipe_fd[1], STDERR_FILENO); // 重定向 stderr
+        close(pipe_fd[1]); // 关闭子进程的写端
+
+        setsid();
+        execl("/usr/bin/moonlight", "moonlight", "stream", "-width", "720", "-height", "720",
+              "-platform", "sdl", "-mapping", "/mnt/vendor/deep/ppsspp/assets/gamecontrollerdb.txt",
+              "-app", "Steam", "-windowed", "-quitappafter", input_text, NULL);
+
+        perror("execl failed");
+        exit(EXIT_FAILURE);
+    } else if (pid > 0) { // 父进程
+        close(pipe_fd[1]); // 关闭父进程的 pipe 写端
+
+        char buffer[256];
+        int bytes_read;
+        while ((bytes_read = read(pipe_fd[0], buffer, sizeof(buffer) - 1)) > 0) {
+            buffer[bytes_read] = '\0';
+            printf("%s", buffer); // 终端输出
+            draw_moonlight_output(buffer); // 渲染到 SDL 界面
+        }
+
+        close(pipe_fd[0]); // 关闭 pipe 读端
+        waitpid(pid, NULL, 0); // 等待 Moonlight 退出
+        printf("Moonlight exited, now returning to SDL window.\n");
+
+        //SDL_Quit();
+        //SDL_Init(SDL_INIT_VIDEO);
+    } else {
+        perror("fork failed");
+    }
+}
+
+void start_moonlight_streaming2() {
     if (cursor_position == 0) return; // 如果输入为空，则不启动
 
     printf("Starting Moonlight stream for: %s\n", input_text);
@@ -105,16 +195,17 @@ void draw_text(const char *text, int x, int y, SDL_Color color) {
     SDL_FreeSurface(text_surface);
 }
 
+
 void draw_input_box() {
-    SDL_Rect input_box = {150, 300, 420, 50};
+    SDL_Rect input_box = {150, 200, 420, 50}; // 调整输入框位置，使其上移
     SDL_FillRect(screen, &input_box, SDL_MapRGB(screen->format, 255, 255, 255));
-    
+
     SDL_Color text_color = {0, 0, 0};
     char display_text[MAX_INPUT_LENGTH + 20];
     snprintf(display_text, sizeof(display_text), "Domain(IP): %s%s", input_text, show_cursor ? "|" : "");
 
-    draw_text(display_text, 155, 315, text_color);
-    
+    draw_text(display_text, 155, 215, text_color);
+
     draw_keyboard(screen);
     SDL_Flip(screen);
 }
