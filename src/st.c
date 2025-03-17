@@ -7,6 +7,7 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 #include "keyboard.h"
+#include "menu.h"
 
 #define EVENT_DEVICE "/dev/input/event1"
 #define MAX_INPUT_LENGTH 256
@@ -66,7 +67,7 @@ int history_count = 10;
 char history[256][10] = {"1","2","3","4","5","6","7","8","9","10"};
 
 void show_history_menu() {
-    FILE *dmenu = popen("/usr/bin/dmenu -l 10", "w");
+    FILE *dmenu = popen("/mnt/vendor/bin/dmenu.bin", "w");
     if (!dmenu) {
         perror("Failed to open dmenu");
         return;
@@ -79,7 +80,7 @@ void show_history_menu() {
     pclose(dmenu);
 
     // 读取 dmenu 选择的结果
-    FILE *result = popen("/usr/bin/dmenu -l 10", "r");
+    FILE *result = popen("/mnt/vendor/bin/dmenu.bin", "r");
     if (!result) {
         perror("Failed to read dmenu result");
         return;
@@ -242,14 +243,20 @@ void draw_input_box() {
 }
 
 int menu_pressed = 0;
-int start_pressed = 0;
+int sel_pressed = 0;
 
 void handle_virtual_keyboard_input(SDLKey key) {
     if (key == SDLK_BACKSPACE && cursor_position > 0) {
         input_text[--cursor_position] = '\0';
     } else if (key == 311) {
-//        start_moonlight_streaming(); // 启动 Moonlight
-	show_history_menu();
+        start_moonlight_streaming(); // 启动 Moonlight
+    } else if (key == 312){
+        const char *selected_entry = show_history_menu(screen);
+        if (selected_entry) {
+            strncpy(input_text, selected_entry, MAX_INPUT_LENGTH - 1);  // 赋值选中的记录
+        }
+        draw_input_box();  // 重新绘制输入框
+
     } else if (key!= SDLK_RETURN  && key != SDLK_UP && key != SDLK_DOWN && key != SDLK_LEFT && key != SDLK_RIGHT) {
         if (cursor_position < MAX_INPUT_LENGTH - 1) {
             input_text[cursor_position++] = (char)key;
@@ -279,22 +286,22 @@ void process_key_event(struct input_event *ev) {
             sdl_event.key.state = SDL_PRESSED;
             SDL_PushEvent(&sdl_event);
         }
-        if (ev->code == 311 || ev->code == 312) {
+        if (ev->code == 311 || ev->code == 312 || ev->code == 310) {
             sdl_event.type = SDL_KEYDOWN;
             sdl_event.key.keysym.sym = ev->code;
             sdl_event.key.state = SDL_PRESSED;
             SDL_PushEvent(&sdl_event);
         }
 
-	if (ev->code == 311) {
-		start_pressed = 1;
+	if (ev->code == 310) {
+		sel_pressed = 1;
 	}
 
 	if (ev->code == 312) {
 		menu_pressed = 1;
 	}
 
-        if (menu_pressed && start_pressed) {
+        if (menu_pressed && sel_pressed) {
             printf("Menu + Start pressed, exiting application.\n");
             running = 0;
         }
@@ -314,7 +321,7 @@ void process_key_event(struct input_event *ev) {
 
     if (ev->type == EV_KEY && ev->value == 0) {
 	    menu_pressed = 0;
-	    start_pressed = 0;
+	    sel_pressed = 0;
     }
 
 
