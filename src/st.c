@@ -11,6 +11,7 @@
 #define EVENT_DEVICE "/dev/input/event1"
 #define MAX_INPUT_LENGTH 256
 
+int running = 1;
 char input_text[MAX_INPUT_LENGTH] = "skysbird.synology.me";
 int cursor_position = strlen("skysbird.synology.me")+1;
 // char input_text[MAX_INPUT_LENGTH] = "";
@@ -210,6 +211,9 @@ void draw_input_box() {
     SDL_Flip(screen);
 }
 
+int menu_pressed = 0;
+int start_pressed = 0;
+
 void handle_virtual_keyboard_input(SDLKey key) {
     if (key == SDLK_BACKSPACE && cursor_position > 0) {
         input_text[--cursor_position] = '\0';
@@ -250,6 +254,20 @@ void process_key_event(struct input_event *ev) {
             sdl_event.key.state = SDL_PRESSED;
             SDL_PushEvent(&sdl_event);
         }
+
+	if (ev->code == 311) {
+		start_pressed = 1;
+	}
+
+	if (ev->code == 312) {
+		menu_pressed = 1;
+	}
+
+        if (menu_pressed && start_pressed) {
+            printf("Menu + Start pressed, exiting application.\n");
+            running = 0;
+        }
+
         
         if (ev->code == 114) {
             //down
@@ -261,7 +279,13 @@ void process_key_event(struct input_event *ev) {
             adjust_volume(1);
         }
         
+    } 
+
+    if (ev->type == EV_KEY && ev->value == 0) {
+	    menu_pressed = 0;
+	    start_pressed = 0;
     }
+
 
     if (ev->type == EV_ABS) {
         if (ev->code == ABS_HAT0Y) {
@@ -311,7 +335,6 @@ void *keyboard_thread(void *arg) {
     return NULL;
 }
 
-int running = 1;
 
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -354,9 +377,6 @@ int main() {
                 running = 0;
             }
             if (event.type == SDL_KEYDOWN) {
-                if (event.key.keysym.sym == 312) {
-                    running = 0;
-                }
                 handle_virtual_keyboard_input(event.key.keysym.sym);
 	        handle_keyboard_event(&event);
             }
