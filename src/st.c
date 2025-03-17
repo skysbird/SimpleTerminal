@@ -87,6 +87,8 @@ void start_moonlight_streaming() {
     if (cursor_position == 0) return; // 如果输入为空，则不启动
 
     printf("Starting Moonlight stream for: %s\n", input_text);
+    adjust_volume(-50);
+    add_to_history(input_text);
 
     int pipe_fd[2];
     if (pipe(pipe_fd) == -1) {

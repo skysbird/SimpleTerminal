@@ -3,23 +3,45 @@
 #include <SDL/SDL_ttf.h>
 #include <string.h>
 
-char history[HISTORY_SIZE][MAX_INPUT_LENGTH] = {"192.168.3.131","skysbird.synology.me"};  // 存储历史记录
-int history_count = 2;
+
+char history[HISTORY_SIZE][MAX_INPUT_LENGTH] = {""};  // 存储最近 10 条记录
+int history_count = 0;
 int selected_index = 0;  // 记录当前选择的索引
 
-// 添加历史记录（FIFO 滚动方式）
+void load_history() {
+    FILE *file = fopen(HISTORY_FILE, "r");
+    if (!file) return;  // 文件不存在，不报错
+
+    history_count = 0;
+    while (history_count < HISTORY_SIZE && fgets(history[history_count], MAX_INPUT_LENGTH, file)) {
+        history[history_count][strcspn(history[history_count], "\n")] = '\0';  // 去掉换行符
+        history_count++;
+    }
+    fclose(file);
+}
+
 void add_to_history(const char *new_entry) {
     if (history_count < HISTORY_SIZE) {
         strncpy(history[history_count], new_entry, MAX_INPUT_LENGTH - 1);
         history_count++;
     } else {
-        // 滚动历史记录，删除最旧的一条
+        // 滚动数组，移除最旧的一条
         for (int i = 1; i < HISTORY_SIZE; i++) {
             strncpy(history[i - 1], history[i], MAX_INPUT_LENGTH - 1);
         }
         strncpy(history[HISTORY_SIZE - 1], new_entry, MAX_INPUT_LENGTH - 1);
     }
+
+    // ✅ 存入文件
+    FILE *file = fopen(HISTORY_FILE, "w");
+    if (!file) return;
+
+    for (int i = 0; i < history_count; i++) {
+        fprintf(file, "%s\n", history[i]);
+    }
+    fclose(file);
 }
+
 
 // 绘制菜单界面
 void draw_menu(SDL_Surface *screen) {

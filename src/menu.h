@@ -5,6 +5,8 @@
 
 #define HISTORY_SIZE 10
 #define MAX_INPUT_LENGTH 256
+#define HISTORY_FILE "/tmp/history.txt"
+
 
 extern char history[HISTORY_SIZE][MAX_INPUT_LENGTH];
 extern int history_count;
