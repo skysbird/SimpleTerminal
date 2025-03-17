@@ -3,7 +3,7 @@
 #include <SDL/SDL_ttf.h>
 #include <string.h>
 
-char history[HISTORY_SIZE][MAX_INPUT_LENGTH] = {""};  // 存储历史记录
+char history[HISTORY_SIZE][MAX_INPUT_LENGTH] = {"192.168.3.131","skysbird.synology.me"};  // 存储历史记录
 int history_count = 0;
 int selected_index = 0;  // 记录当前选择的索引
 
