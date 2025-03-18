@@ -99,14 +99,14 @@ void start_moonlight_streaming() {
     pid_t pid = fork();
     if (pid == 0) { // 子进程
         close(pipe_fd[0]); // 关闭子进程的 pipe 读端
-        dup2(pipe_fd[1], STDOUT_FILENO); // 重定向 stdout
+//        dup2(pipe_fd[1], STDOUT_FILENO); // 重定向 stdout
         dup2(pipe_fd[1], STDERR_FILENO); // 重定向 stderr
         close(pipe_fd[1]); // 关闭子进程的写端
 
         setsid();
         execl("/usr/bin/moonlight", "moonlight", "stream", "-width", "720", "-height", "720",
               "-platform", "sdl", "-mapping", "/mnt/vendor/deep/ppsspp/assets/gamecontrollerdb.txt",
-              "-app", "Steam", "-windowed", "-quitappafter", input_text, NULL);
+              "-app", "Steam", "-windowed",  input_text, NULL);
 
         perror("execl failed");
         exit(EXIT_FAILURE);
@@ -125,11 +125,11 @@ void start_moonlight_streaming() {
         waitpid(pid, NULL, 0); // 等待 Moonlight 退出
         printf("Moonlight exited, now returning to SDL window.\n");
 
-        SDL_Quit();
-        if (!SDL_WasInit(SDL_INIT_VIDEO)) {
-            SDL_Init(SDL_INIT_VIDEO);
-            screen = SDL_SetVideoMode(720, 720, 16, SDL_SWSURFACE);
-        }
+        //SDL_Quit();
+        //if (!SDL_WasInit(SDL_INIT_VIDEO)) {
+        //    SDL_Init(SDL_INIT_VIDEO);
+        //    screen = SDL_SetVideoMode(720, 720, 16, SDL_SWSURFACE);
+        //}
 
     } else {
         perror("fork failed");
