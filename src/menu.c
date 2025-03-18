@@ -14,6 +14,8 @@ int selected_index = 0;  // 记录当前选择的索引
 
 void setup_history_file() {
     const char *home = getenv("HOME");  // 获取 HOME 目录
+    printf("HOME: %s\n", home);
+    
     if (home) {
         snprintf(HISTORY_FILE, sizeof(HISTORY_FILE), "%s/.ml_gui/history.txt", home);
 
