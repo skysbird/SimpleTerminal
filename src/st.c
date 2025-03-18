@@ -396,6 +396,7 @@ int main() {
     pthread_t tid;
     pthread_create(&tid, NULL, keyboard_thread, NULL);
 
+    load_history();
     while (running) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {

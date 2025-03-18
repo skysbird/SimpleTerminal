@@ -2,13 +2,43 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 #include <string.h>
+#include <stdlib.h>    // getenv()
+#include <sys/stat.h>  // mkdir()
+#include <sys/types.h> // mode_t
 
+char HISTORY_FILE[MAX_INPUT_LENGTH];  // 存储历史文件路径
 
 char history[HISTORY_SIZE][MAX_INPUT_LENGTH] = {""};  // 存储最近 10 条记录
 int history_count = 0;
 int selected_index = 0;  // 记录当前选择的索引
 
+void setup_history_file() {
+    const char *home = getenv("HOME");  // 获取 HOME 目录
+    if (home) {
+        snprintf(HISTORY_FILE, sizeof(HISTORY_FILE), "%s/.ml_gui/history.txt", home);
+
+        // ✅ 自动创建 `~/.ml_gui` 目录
+        char history_dir[MAX_INPUT_LENGTH];
+        snprintf(history_dir, sizeof(history_dir), "%s/.ml_gui", home);
+
+        struct stat st;
+        if (stat(history_dir, &st) != 0) {  // 如果目录不存在
+            if (mkdir(history_dir, 0700) == 0) {
+                printf("Created directory: %s\n", history_dir);
+            } else {
+                perror("Failed to create ~/.ml_gui");
+            }
+        }
+    } else {
+        // 如果 HOME 变量不存在，回退到 /tmp
+        strncpy(HISTORY_FILE, "/tmp/history.txt", sizeof(HISTORY_FILE) - 1);
+    }
+}
+
 void load_history() {
+
+    setup_history_file();  // ✅ 确保 HISTORY_FILE 正确，并创建目录
+
     FILE *file = fopen(HISTORY_FILE, "r");
     if (!file) return;  // 文件不存在，不报错
 
