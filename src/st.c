@@ -19,6 +19,7 @@ int cursor_position = strlen("skysbird.synology.me")+1;
 // int cursor_position = 0;
 
 int show_cursor = 1;
+int moon_running = 0;
 Uint32 last_cursor_toggle = 0;
 
 SDL_Surface *screen;
@@ -121,6 +122,7 @@ void start_moonlight_streaming() {
             // ✅ 以 "Starting input stream...done" 作为 Moonlight 启动成功的标志
             if (strstr(buffer, "Starting input stream...done")) {
                 printf("Moonlight streaming started, hiding SDL UI.\n");
+		moon_running = 1;
                 SDL_QuitSubSystem(SDL_INIT_VIDEO);
 		//SDL_Quit();
 		break;
@@ -141,6 +143,7 @@ void start_moonlight_streaming() {
 	   SDL_InitSubSystem(SDL_INIT_VIDEO);
            screen = SDL_SetVideoMode(720, 720, 16, SDL_SWSURFACE);
         }
+	moon_running = 0;
 
     } else {
         perror("fork failed");
@@ -215,45 +218,46 @@ void process_key_event(struct input_event *ev) {
     //SDL_PushEvent(&sdl_event);
 
     if (ev->type == EV_KEY && ev->value == 1) { // Key Pressed
-        if (ev->code == BTN_SOUTH) {
-            // A 按键按下，转换为 SDL 事件
-            sdl_event.type = SDL_KEYDOWN;
-            sdl_event.key.keysym.sym = SDLK_RETURN;
-            sdl_event.key.state = SDL_PRESSED;
-            SDL_PushEvent(&sdl_event);
-        }
+        if (moon_running == 0){
+        	if (ev->code == BTN_SOUTH) {
+        	    // A 按键按下，转换为 SDL 事件
+        	    sdl_event.type = SDL_KEYDOWN;
+        	    sdl_event.key.keysym.sym = SDLK_RETURN;
+        	    sdl_event.key.state = SDL_PRESSED;
+        	    SDL_PushEvent(&sdl_event);
+        	}
 
-	if (ev->code == 310) {
-		sel_pressed = 1;
+		if (ev->code == 310) {
+			sel_pressed = 1;
+		}
+
+		if (ev->code == 312) {
+			menu_pressed = 1;
+		}
+
+		if (ev->code == 311){
+			start_pressed = 1;
+		}
+
+        	if (menu_pressed && sel_pressed) {
+        	    printf("Menu + Start pressed, exiting application.\n");
+        	    running = 0;
+		    return;
+        	}
+
+		//if (sel_pressed && start_pressed) {
+
+        	//        system("pkill moonlight");
+		//	return;
+		//}
+
+        	if (ev->code == 311 || ev->code == 312 || ev->code == 310) {
+        	    sdl_event.type = SDL_KEYDOWN;
+        	    sdl_event.key.keysym.sym = ev->code;
+        	    sdl_event.key.state = SDL_PRESSED;
+        	    SDL_PushEvent(&sdl_event);
+        	}
 	}
-
-	if (ev->code == 312) {
-		menu_pressed = 1;
-	}
-
-	if (ev->code == 311){
-		start_pressed = 1;
-	}
-
-        if (menu_pressed && sel_pressed) {
-            printf("Menu + Start pressed, exiting application.\n");
-            running = 0;
-	    return;
-        }
-
-	if (sel_pressed && start_pressed) {
-
-                system("pkill moonlight");
-		return;
-	}
-
-        if (ev->code == 311 || ev->code == 312 || ev->code == 310) {
-            sdl_event.type = SDL_KEYDOWN;
-            sdl_event.key.keysym.sym = ev->code;
-            sdl_event.key.state = SDL_PRESSED;
-            SDL_PushEvent(&sdl_event);
-        }
-
 
         
         if (ev->code == 114) {
@@ -275,7 +279,7 @@ void process_key_event(struct input_event *ev) {
     }
 
 
-    if (ev->type == EV_ABS) {
+    if (ev->type == EV_ABS && moon_running == 0) {
         if (ev->code == ABS_HAT0Y) {
             // D-Pad 上下方向
             sdl_event.type = SDL_KEYDOWN;
