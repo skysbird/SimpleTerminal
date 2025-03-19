@@ -122,6 +122,8 @@ void start_moonlight_streaming() {
             if (strstr(buffer, "Starting input stream...done")) {
                 printf("Moonlight streaming started, hiding SDL UI.\n");
                 SDL_QuitSubSystem(SDL_INIT_VIDEO);
+		//SDL_Quit();
+		break;
             }
 
             draw_moonlight_output(buffer); // 渲染到 SDL 界面
@@ -132,11 +134,11 @@ void start_moonlight_streaming() {
         waitpid(pid, NULL, 0); // 等待 Moonlight 退出
         printf("Moonlight exited, now returning to SDL window.\n");
 
-        SDL_InitSubSystem(SDL_INIT_VIDEO);
+//        SDL_InitSubSystem(SDL_INIT_VIDEO);
 
-        SDL_Quit();
+//        SDL_Quit();
         if (!SDL_WasInit(SDL_INIT_VIDEO)) {
-           SDL_Init(SDL_INIT_VIDEO);
+	   SDL_InitSubSystem(SDL_INIT_VIDEO);
            screen = SDL_SetVideoMode(720, 720, 16, SDL_SWSURFACE);
         }
 
