@@ -83,6 +83,7 @@ void adjust_volume(int volume_change) {
     printf("\n");
 }
 
+#define LOG_HISTORY_SIZE 10 // 只保留最近 10 条日志
 
 void start_moonlight_streaming() {
     if (cursor_position == 0) return; // 如果输入为空，则不启动
@@ -91,11 +92,13 @@ void start_moonlight_streaming() {
     adjust_volume(-50);
     add_to_history(input_text);
 
+
     int pipe_fd[2];
     if (pipe(pipe_fd) == -1) {
         perror("pipe failed");
         return;
     }
+
 
     pid_t pid = fork();
     if (pid == 0) { // 子进程
@@ -104,7 +107,7 @@ void start_moonlight_streaming() {
         dup2(pipe_fd[1], STDERR_FILENO); // 重定向 stderr
         close(pipe_fd[1]); // 关闭子进程的写端
 
-        setsid();
+        //setsid();
         execl("/usr/bin/moonlight", "moonlight", "stream", "-width", "720", "-height", "720",
               "-platform", "sdl", "-mapping", "/mnt/vendor/deep/ppsspp/assets/gamecontrollerdb.txt",
               "-app", "Steam", "-windowed",  input_text, NULL);
@@ -113,8 +116,12 @@ void start_moonlight_streaming() {
         exit(EXIT_FAILURE);
     } else if (pid > 0) { // 父进程
         close(pipe_fd[1]); // 关闭父进程的 pipe 写端
+        SDL_WM_IconifyWindow();
 
         char buffer[256];
+        char log_history[LOG_HISTORY_SIZE][256]; // ✅ 只存储最近 10 条日志
+        int log_index = 0;
+
         int bytes_read;
         while ((bytes_read = read(pipe_fd[0], buffer, sizeof(buffer) - 1)) > 0) {
             buffer[bytes_read] = '\0';
@@ -123,27 +130,39 @@ void start_moonlight_streaming() {
             if (strstr(buffer, "Starting input stream...done")) {
                 printf("Moonlight streaming started, hiding SDL UI.\n");
 		moon_running = 1;
-                SDL_QuitSubSystem(SDL_INIT_VIDEO);
+                //SDL_QuitSubSystem(SDL_INIT_VIDEO);
 		//SDL_Quit();
 		break;
             }
 
-            draw_moonlight_output(buffer); // 渲染到 SDL 界面
-            
+            //draw_moonlight_output(buffer); // 渲染到 SDL 界面
+            // ✅ 存储最近 10 条日志（循环覆盖旧日志）
+            strncpy(log_history[log_index % LOG_HISTORY_SIZE], buffer, sizeof(buffer) - 1);
+            log_history[log_index % LOG_HISTORY_SIZE][sizeof(buffer) - 1] = '\0'; // 确保字符串终止
+            log_index++;
+
         }
 
         close(pipe_fd[0]); // 关闭 pipe 读端
         waitpid(pid, NULL, 0); // 等待 Moonlight 退出
         printf("Moonlight exited, now returning to SDL window.\n");
 
+
 //        SDL_InitSubSystem(SDL_INIT_VIDEO);
 
-//        SDL_Quit();
+        SDL_Quit();
         if (!SDL_WasInit(SDL_INIT_VIDEO)) {
-	   SDL_InitSubSystem(SDL_INIT_VIDEO);
            screen = SDL_SetVideoMode(720, 720, 16, SDL_SWSURFACE);
         }
 	moon_running = 0;
+
+	// ✅ 重新回显最近 10 条日志
+        printf("==== Moonlight Log (Recent 10 Entries) ====\n");
+        int start_index = (log_index >= LOG_HISTORY_SIZE) ? log_index - LOG_HISTORY_SIZE : 0;
+        for (int i = start_index; i < log_index; i++) {
+            draw_moonlight_output(log_history[i % LOG_HISTORY_SIZE]);
+        }
+        printf("==========================================\n");
 
     } else {
         perror("fork failed");
